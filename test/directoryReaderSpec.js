@@ -1,5 +1,7 @@
 'use strict';
 
+/* jshint -W030 */
+
 var fs = require('fs');
 var Q = require('q');
 var sinon = require('sinon');
@@ -27,12 +29,12 @@ describe('directoryReader Spec', function () {
         });
     });
 
-    describe('and some files that are no mp3 files', function () {
+    describe('and some files are not mp3 files', function () {
       it('Should just call the files with mp3 files', function (done) {
         sandbox.stub(fs, 'readdir').yields(null, ['file1.txt']);
         directoryReader.readFiles('~/download/mp3')
           .done(function () {
-            expect(fileMatcher.match.notCalledWith('file1.txt'));
+            expect(fileMatcher.match.notCalled).to.be.true;
             done();
           });
 
