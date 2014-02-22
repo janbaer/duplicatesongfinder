@@ -1,0 +1,33 @@
+{
+  "name": "duplicatesongfinder",
+  "version": "0.0.1",
+  "description": "A tool to remove duplicate mp3 files",
+  "main": "app.js",
+  "scripts": {
+    "test": "gulp test",
+    "preinstall": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/janbaer/duplicatesongfinder"
+  },
+  "author": "Jan Baer",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "~1.9.0",
+    "sinon": "~1.8.2",
+    "sinon-chai": "~2.5.0",
+    "grunt-contrib-jshint": "~0.7.2",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-karma": "~0.6.1",
+    "grunt-nodemon": "~0.1.1",
+    "grunt": "~0.4",
+    "grunt-exec": "~0.4.2",
+    "grunt-mocha-test": "~0.8.1",
+    "matchdep": "~0.3.0"
+  },
+  "dependencies": {
+    "commander": "~2.1.0",
+    "q": "~1.0.0"
+  }
+}
