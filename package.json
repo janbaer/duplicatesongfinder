@@ -24,7 +24,8 @@
     "grunt": "~0.4",
     "grunt-exec": "~0.4.2",
     "grunt-mocha-test": "~0.8.1",
-    "matchdep": "~0.3.0"
+    "matchdep": "~0.3.0",
+    "mv": "~1.0.0"
   },
   "dependencies": {
     "commander": "~2.1.0",
