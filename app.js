@@ -13,7 +13,9 @@ program.version('0.0.1')
        .option('-wi, --what-if', 'simulates the operations only')
        .parse(process.argv);
 
+var whatIf = true; //program.whatIf !== undefined;
 var directories = [];
+
 if (program.directory !== undefined) {
   directories.push(program.directory);
 } else {
@@ -23,7 +25,7 @@ if (program.directory !== undefined) {
 var promises = [];
 
 directories.forEach(function (directory) {
-  var promise = directoryReader.init(directory).then(directoryReader.read(directory));
+  var promise = directoryReader.init(directory).then(directoryReader.read(directory, whatIf));
   promises.push(promise);
 });
 
