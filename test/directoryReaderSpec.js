@@ -18,7 +18,7 @@ describe('directoryReader Spec', function () {
       sandbox = sinon.sandbox.create();
     });
 
-    describe('CheckFiles', function () {
+    describe('readDir', function () {
       beforeEach(function () {
         sandbox.stub(fileChecker, 'check').returns(q.resolve(true));
       });
@@ -26,7 +26,7 @@ describe('directoryReader Spec', function () {
       it('Should call the fileChecker for each file', function (done) {
         sandbox.stub(fs, 'readdir').yields(null, ['file1.mp3', 'file2.mp3', 'file3.mp3']);
 
-        directoryReader.read('~/download/mp3')
+        directoryReader.readDir('~/download/mp3')
           .done(function () {
             expect(fileChecker.check.callCount).to.equal(3);
             done();
@@ -39,7 +39,7 @@ describe('directoryReader Spec', function () {
         });
 
         it('Should just call the files with mp3 files', function (done) {
-          directoryReader.read('~/Downloads/mp3')
+          directoryReader.readDir('~/Downloads/mp3')
             .done(function () {
               expect(fileChecker.check.notCalled).to.be.true;
               done();
