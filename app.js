@@ -1,5 +1,3 @@
-#! /usr/bin/env node
-
 'use strict';
 
 var fs = require('fs'),
@@ -20,7 +18,7 @@ program.version('0.0.1')
        .option('-wi, --what-if', 'simulates the operations only')
        .parse(process.argv);
 
-var whatIf = true;//program.whatIf !== undefined;
+var whatIf = program.whatIf !== undefined;
 var directories = [];
 
 if (program.directory !== undefined) {
