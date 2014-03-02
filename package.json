@@ -32,6 +32,7 @@
     "q": "~1.0.0",
     "fs-extended": "~0.2.0",
     "color-log": "0.0.2",
-    "then-redis": "~0.3.10"
+    "then-redis": "~0.3.10",
+    "node-watch": "~0.3.4"
   }
 }

@@ -4,7 +4,14 @@
 
 var fs = require('fs'),
     program = require('commander'),
-    Q = require('q');
+    util = require('util'),
+    log = require('color-log'),
+    Q = require('q'),
+    watch = require('node-watch');
+
+var isProduction = process.env.NODE_ENV === 'production';
+
+log.info(util.format('You are working in %s mode', process.env.NODE_ENV));
 
 var directoryReader = require('./lib/directoryReader.js');
 
@@ -13,14 +20,37 @@ program.version('0.0.1')
        .option('-wi, --what-if', 'simulates the operations only')
        .parse(process.argv);
 
-var whatIf = program.whatIf !== undefined;
+var whatIf = true;//program.whatIf !== undefined;
 var directories = [];
 
 if (program.directory !== undefined) {
   directories.push(program.directory);
 } else {
-  directories = require('./config/config.dev.json');
+  var configFile = isProduction ? './config/config.json' : './config/config.dev.json';
+  directories = require(configFile);
+  if (directories.length === 0) {
+    log.warn(util.format('No directories defined in %s', configFile));
+    return;
+  }
 }
+
+var filter = function(pattern, callback) {
+  return function(filename) {
+    if (pattern.test(filename)) {
+      callback(filename);
+    }
+  };
+};
+
+var watchDirectory = function (directoryPath, whatIf) {
+  log.info(util.format('Watching "%s"', directoryPath));
+  watch(directoryPath, { recursive: false }, filter(/\.mp3$/, function(filename) {
+    log.info(util.format('New file "%s" in directory "%s"', filename, directoryPath));
+    var files = [];
+    files.push(filename);
+    directoryReader.readFiles(directoryPath, files, whatIf);
+  }));
+};
 
 var promises = [];
 
@@ -30,13 +60,17 @@ directories.forEach(function (directory) {
 });
 
 Q.all(promises).done(function () {
-  console.log('All directories successful processed...');
-
-  console.info('Now I am going into the watch mode');
-
+  log.info('All directories successful processed...');
+  log.info('Now I am going into the watch mode');
+  directories.forEach(function (directory) {
+    watchDirectory(directory);
+  });
 }, function (error) {
-  console.error('Error while processing the defined directories: %s', error);
+  log.error(util.format('Error while processing the defined directories: %s', error));
 });
+
+
+
 
 
 
