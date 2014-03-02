@@ -3,6 +3,7 @@
 var fs = require('fs'),
     program = require('commander'),
     util = require('util'),
+    path = require('path'),
     log = require('color-log'),
     Q = require('q'),
     watch = require('node-watch');
@@ -15,7 +16,7 @@ var directoryReader = require('./lib/directoryReader.js');
 
 program.version('0.0.1')
        .option('-d, --directory', 'name of the directory')
-       .option('-wi, --what-if', 'simulates the operations only')
+       .option('-w, --what-if', 'simulates the operations only')
        .parse(process.argv);
 
 var whatIf = program.whatIf !== undefined;
@@ -32,6 +33,10 @@ if (program.directory !== undefined) {
   }
 }
 
+if (whatIf) {
+  log.info('Simulating file operations only...');
+}
+
 var filter = function(pattern, callback) {
   return function(filename) {
     if (pattern.test(filename)) {
@@ -43,29 +48,46 @@ var filter = function(pattern, callback) {
 var watchDirectory = function (directoryPath, whatIf) {
   log.info(util.format('Watching "%s"', directoryPath));
   watch(directoryPath, { recursive: false }, filter(/\.mp3$/, function(filename) {
-    log.info(util.format('New file "%s" in directory "%s"', filename, directoryPath));
-    var files = [];
-    files.push(filename);
-    directoryReader.readFiles(directoryPath, files, whatIf);
+    if (fs.existsSync(filename)) {
+      log.info(util.format('New file "%s" in directory "%s"', filename, directoryPath));
+      var files = [];
+      files.push(path.basename(filename));
+      directoryReader.readFiles(directoryPath, files, whatIf);
+    }
   }));
 };
 
-var promises = [];
+var initAllDirectories = function () {
+  var promises = [];
+  directories.forEach(function (directory) {
+    promises.push(directoryReader.init(directory));
+  });
+  return Q.all(promises);
+};
 
-directories.forEach(function (directory) {
-  var promise = directoryReader.init(directory).then(directoryReader.readDir(directory, whatIf));
-  promises.push(promise);
-});
+var checkAllDirectories = function () {
+  var promises = [];
+  directories.forEach(function (directory) {
+    promises.push(directoryReader.readDir(directory));
+  });
+  return Q.all(promises);
+};
 
-Q.all(promises).done(function () {
+var watchAllDirectories = function () {
   log.info('All directories successful processed...');
   log.info('Now I am going into the watch mode');
   directories.forEach(function (directory) {
     watchDirectory(directory);
   });
-}, function (error) {
-  log.error(util.format('Error while processing the defined directories: %s', error));
-});
+};
+
+initAllDirectories()
+  .then(checkAllDirectories)
+  .then(watchAllDirectories)
+  .catch(function (error) {
+    log.error(util.format('Error while processing the defined directories: %s', error));
+  })
+  .done();
 
 
 
