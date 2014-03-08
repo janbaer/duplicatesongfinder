@@ -70,7 +70,10 @@ var watchDirectory = function (directoryPath, whatIf) {
       log.info(util.format('New file "%s" in directory "%s"', filename, directoryPath));
       var files = [];
       files.push(path.basename(filename));
-      directoryReader.readFiles(directoryPath, files, whatIf);
+      directoryReader.readFiles(directoryPath, files, whatIf)
+        .catch(function (error) {
+          log.error(util.format('Error while checking new files in "%s": %s', directoryPath, error));
+        });
     }
   }));
 };
