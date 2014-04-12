@@ -10,7 +10,7 @@ var fs = require('fs'),
 
 var isProduction = process.env.NODE_ENV === 'production';
 
-log.info(util.format('You are working in %s mode', process.env.NODE_ENV));
+log.info(util.format('You are working in %s mode', isProduction ? 'production' : 'dev'));
 
 var directoryReader = require('./lib/directoryReader.js');
 
@@ -65,6 +65,7 @@ var checkAllDirectories = function () {
 
 var watchDirectory = function (directoryPath, whatIf) {
   log.info(util.format('Watching "%s"', directoryPath));
+
   watch(directoryPath, { recursive: false }, filter(/\.mp3$/, function(filename) {
     if (fs.existsSync(filename)) {
       log.info(util.format('New file "%s" in directory "%s"', filename, directoryPath));
@@ -81,8 +82,14 @@ var watchDirectory = function (directoryPath, whatIf) {
 var watchAllDirectories = function () {
   log.info('All directories successful processed...');
   log.info('Now I am going into the watch mode');
-  directories.forEach(function (directory) {
-    watchDirectory(directory);
+  directories.forEach(function (directoryPath) {
+    directoryReader.existsDir(directoryPath).then(function (exists) {
+      if (!exists) {
+        log.warn(util.format('Directory "%s" was not found and could not be watched', directoryPath));
+      } else {
+        watchDirectory(directoryPath);
+      }
+    });
   });
 };
 
