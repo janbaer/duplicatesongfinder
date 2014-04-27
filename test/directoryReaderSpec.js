@@ -24,6 +24,7 @@ describe('directoryReader Spec', function () {
       });
 
       it('Should call the fileChecker for each file', function (done) {
+        sandbox.stub(fs, 'exists').yields(true);
         sandbox.stub(fs, 'readdir').yields(null, ['file1.mp3', 'file2.mp3', 'file3.mp3']);
 
         directoryReader.readDir('~/download/mp3')
@@ -49,17 +50,23 @@ describe('directoryReader Spec', function () {
     });
 
     describe('Init', function () {
+      var testDirectoryPath = '~/Downloads/mp3',
+          processedDirectoryPath = '~/Downloads/mp3/processed';
+
       describe('When the processed directory not exists', function () {
+
         beforeEach(function () {
-          sandbox.stub(fs, 'exists').yields(false);
+          var fsExistsStub = sandbox.stub(fs, 'exists');
+          fsExistsStub.withArgs(testDirectoryPath).yields(true);
+          fsExistsStub.withArgs(processedDirectoryPath).yields(false);
           sandbox.stub(fs, 'mkdir').yields(null);
         });
 
         it('Should create it', function (done) {
-          directoryReader.init('~/Downloads/mp3')
+          directoryReader.init(testDirectoryPath)
             .done(function () {
               expect(fs.exists.called).to.be.true;
-              expect(fs.mkdir.calledWith('~/Downloads/mp3/processed')).to.be.true;
+              expect(fs.mkdir.calledWith(processedDirectoryPath)).to.be.true;
               done();
             });
         });
@@ -72,7 +79,7 @@ describe('directoryReader Spec', function () {
         });
 
         it('Should not try to create directory', function (done) {
-          directoryReader.init('~/Downloads/mp3')
+          directoryReader.init(testDirectoryPath)
             .done(function () {
               expect(fs.exists.called).to.be.true;
               expect(fs.mkdir.called).to.be.false;
