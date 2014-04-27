@@ -18,7 +18,7 @@ describe('songNameBuilderSpec', function () {
 
   describe('When the song ends with a number but also contains round brackets with version name', function () {
     it('Should also return the trimmed songname with the version name', function () {
-      expect(builder.build('Artist - title (maxi) (1)')).to.equal('Artist - title (maxi)');
+      expect(builder.build('Artist - title (maxi) (2)')).to.equal('Artist - title (maxi)');
     });
   });
 });
