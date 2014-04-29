@@ -45,22 +45,22 @@ var filter = function(pattern, callback) {
   };
 };
 
-var processDirectories = function (directories, callback) {
+var processDirectories = function (directories, whatIf, callback) {
   var promises = [];
 
   directories.forEach(function (directory) {
-    promises.push(callback(directory));
+    promises.push(callback(directory, whatIf));
   });
 
   return Q.all(promises);
 };
 
 var initAllDirectories = function () {
-  return processDirectories(directories, directoryReader.init);
+  return processDirectories(directories, whatIf, directoryReader.init);
 };
 
 var checkAllDirectories = function () {
-  return processDirectories(directories, directoryReader.readDir);
+  return processDirectories(directories, whatIf, directoryReader.readDir);
 };
 
 var watchDirectory = function (directoryPath, whatIf) {
@@ -87,7 +87,7 @@ var watchAllDirectories = function () {
       if (!exists) {
         log.warn(util.format('Directory "%s" was not found and could not be watched', directoryPath));
       } else {
-        watchDirectory(directoryPath);
+        watchDirectory(directoryPath, whatIf);
       }
     });
   });
