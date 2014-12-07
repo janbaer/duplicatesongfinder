@@ -3,26 +3,27 @@
 var fs = require('fs'),
     program = require('commander'),
     util = require('util'),
-    path = require('path'),
     log = require('color-log'),
-    Q = require('q'),
-    watch = require('node-watch');
+    async = require('async'),
+    watch = require('node-watch'),
+    directoryReader = require('./lib/directoryReader.js'),
+    fileChecker = require('./lib/fileChecker.js');
 
 var isProduction = process.env.NODE_ENV === 'production';
 
 log.info(util.format('You are working in %s mode', isProduction ? 'production' : 'dev'));
 
-var directoryReader = require('./lib/directoryReader.js');
-
-program.version('0.0.1')
+program.version('0.0.2')
        .option('-d, --directory', 'name of the directory')
        .option('-w, --what-if', 'simulates the operations only')
        .parse(process.argv);
 
 var whatIf = program.whatIf !== undefined;
+var queue = [];
 var directories = [];
+var watchingIsActive = false;
 
-if (program.directory !== undefined) {
+if (program.directory) {
   directories.push(program.directory);
 } else {
   var configFile = isProduction ? './config/config.json' : './config/config.dev.json';
@@ -37,66 +38,81 @@ if (whatIf) {
   log.info('Simulating file operations only...');
 }
 
-var filter = function(pattern, callback) {
-  return function(filename) {
-    if (pattern.test(filename)) {
-      callback(filename);
-    }
-  };
+var addFileToWorkingQueue = function (filePath) {
+  queue.push(filePath);
 };
 
-var processDirectories = function (directories, whatIf, callback) {
-  var promises = [];
-
-  directories.forEach(function (directory) {
-    promises.push(callback(directory, whatIf));
+var processFiles = function (files) {
+  async.each(files, function (filePath, callback) {
+    fileChecker.checkFile(filePath, whatIf)
+      .then(function () {
+        callback();
+      })
+      .catch(function (error) {
+        log.error('Unexpected error while processing mp3-file', filePath, error);
+        callback(error);
+      });
+  }, function (error) {
+    if (!error) {
+      watchDirectories();
+    }
   });
 
-  return Q.all(promises);
+  log.info('Process files finished');
 };
 
-var initAllDirectories = function () {
-  return processDirectories(directories, whatIf, directoryReader.init);
+var initDirectories = function (directories) {
+  directories.forEach(function (directory) {
+    directoryReader.init(directory);
+  });
 };
 
-var checkAllDirectories = function () {
-  return processDirectories(directories, whatIf, directoryReader.readDir);
+var checkDirectories = function (directories) {
+  directories.forEach(function (directory) {
+    directoryReader.readDir(directory, addFileToWorkingQueue);
+  });
 };
 
 var watchDirectory = function (directoryPath, whatIf) {
   log.info(util.format('Watching "%s"', directoryPath));
 
-  watch(directoryPath, { recursive: false }, filter(/\.mp3$/, function(filename) {
-    if (fs.existsSync(filename)) {
-      log.info(util.format('New file "%s" in directory "%s"', filename, directoryPath));
-      var files = [];
-      files.push(path.basename(filename));
-      directoryReader.readFiles(directoryPath, files, whatIf)
-        .catch(function (error) {
-          log.error(util.format('Error while checking new files in "%s": %s', directoryPath, error));
-        });
+  watch(directoryPath, { recursive: false }, function(filePath) {
+    if (fs.existsSync(filePath) &&
+        directoryReader.isMp3File(filePath)) {
+      processFiles([filePath]);
     }
-  }));
-};
-
-var watchAllDirectories = function () {
-  log.info('All directories successful processed...');
-  log.info('Now I am going into the watch mode');
-  directories.forEach(function (directoryPath) {
-    directoryReader.existsDir(directoryPath).then(function (exists) {
-      if (!exists) {
-        log.warn(util.format('Directory "%s" was not found and could not be watched', directoryPath));
-      } else {
-        watchDirectory(directoryPath, whatIf);
-      }
-    });
   });
 };
 
-Q.fcall(initAllDirectories)
-  .then(checkAllDirectories)
-  .then(watchAllDirectories)
-  .catch(function (error) {
-    log.error(util.format('Error while processing the defined directories: %s', error));
-  })
-  .done();
+/* jshint -W003 */
+var watchDirectories = function () {
+  if (watchingIsActive) {
+    return;
+  }
+
+  log.info('Now I am going into the watch mode');
+  watchingIsActive = true;
+
+  directories.forEach(function (directoryPath) {
+    if (!directoryReader.existsDir(directoryPath)) {
+      log.warn(util.format('Directory "%s" was not found and could not be watched', directoryPath));
+      return;
+    }
+    watchDirectory(directoryPath, whatIf);
+  });
+};
+
+
+initDirectories(directories);
+
+log.info(util.format('Start with checking %d directories', directories.length));
+
+checkDirectories(directories);
+
+log.info(util.format('Processing now %d files', queue.length));
+
+processFiles(queue);
+
+
+
+
