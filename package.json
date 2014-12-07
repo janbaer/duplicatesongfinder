@@ -34,6 +34,6 @@
     "fs-extended": "~0.2.0",
     "node-watch": "~0.3.4",
     "q": "~1.1.2",
-    "then-redis": "~1.0.1"
+    "then-redis": "~0.3.10"
   }
 }
