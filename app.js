@@ -53,7 +53,6 @@ var processFiles = function (files) {
         callback(error);
       });
   }, function (error) {
-    log.info(util.format('Process files finished %s errors', error ? 'with' : 'without'));
     if (!error) {
       watchDirectories();
     }
