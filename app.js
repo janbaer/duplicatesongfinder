@@ -52,7 +52,7 @@ var saveKeyStore = function () {
   setTimeout(function () {
     keyStore.save();
     isWaitingForSaveKeyStore = false;
-  }, 10 * 1000);
+  }, 5 * 1000);
 };
 
 var addFileToWorkingQueue = function (filePath) {
