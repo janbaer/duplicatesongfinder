@@ -29,6 +29,7 @@
   "dependencies": {
     "color-log": "0.0.2",
     "commander": "~2.5.0",
+    "es6-set": "^0.1.1",
     "fs-extended": "~0.2.0",
     "node-watch": "~0.3.4",
     "q": "~1.1.2",
